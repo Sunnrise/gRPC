@@ -1,11 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System.Threading.Channels;
 using Grpc.Net.Client;
 using grpcMessageClient;
-using grpcServer;
-
-Console.WriteLine("Hello, World!");
 
 var channel = GrpcChannel.ForAddress("http://localhost:5247/");
 
@@ -22,10 +18,25 @@ var messageClient = new Message.MessageClient(channel);
 // Console.WriteLine(messageReply.Message);
 
 ////Server Streaming
-var response = messageClient.SendMessage(new MessageRequest{ Name = "SelamünAleyküm", Message = "Nasılsınız?" });
- CancellationTokenSource cts = new CancellationTokenSource();
+// var response = messageClient.SendMessage(new MessageRequest{ Name = "SelamünAleyküm", Message = "Nasılsınız?" });
+//  CancellationTokenSource cts = new CancellationTokenSource();
+//
+// while (await response.ResponseStream.MoveNext(cts.Token))
+// {
+//     System.Console.WriteLine(response.ResponseStream.Current.Message);
+// }
 
-while (await response.ResponseStream.MoveNext(cts.Token))
+////Client Streaming
+var request = messageClient.SendMessage();
+for (int i = 0; i < 10; i++)
 {
-    System.Console.WriteLine(response.ResponseStream.Current.Message);
+    await Task.Delay(1000);
+    await request.RequestStream.WriteAsync(new MessageRequest
+    {
+        Name = "SelamünAleyküm",
+        Message = "Message"+i
+    });
 }
+await request.RequestStream.CompleteAsync();
+System.Console.WriteLine((await request.ResponseAsync).Message);
+

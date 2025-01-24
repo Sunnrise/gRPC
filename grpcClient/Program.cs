@@ -19,7 +19,7 @@ var messageClient = new Message.MessageClient(channel);
 
 ////Server Streaming
 // var response = messageClient.SendMessage(new MessageRequest{ Name = "SelamünAleyküm", Message = "Nasılsınız?" });
-//  CancellationTokenSource cts = new CancellationTokenSource();
+CancellationTokenSource cts = new CancellationTokenSource();
 //
 // while (await response.ResponseStream.MoveNext(cts.Token))
 // {
@@ -27,16 +27,37 @@ var messageClient = new Message.MessageClient(channel);
 // }
 
 ////Client Streaming
-var request = messageClient.SendMessage();
-for (int i = 0; i < 10; i++)
-{
-    await Task.Delay(1000);
-    await request.RequestStream.WriteAsync(new MessageRequest
-    {
-        Name = "SelamünAleyküm",
-        Message = "Message"+i
-    });
-}
-await request.RequestStream.CompleteAsync();
-System.Console.WriteLine((await request.ResponseAsync).Message);
+// var request = messageClient.SendMessage();
+// for (int i = 0; i < 10; i++)
+// {
+//     await Task.Delay(1000);
+//     await request.RequestStream.WriteAsync(new MessageRequest
+//     {
+//         Name = "SelamünAleyküm",
+//         Message = "Message"+i
+//     });
+// }
+// await request.RequestStream.CompleteAsync();
+// System.Console.WriteLine((await request.ResponseAsync).Message);
 
+////Bi-Directional Streaming
+var request = messageClient.SendMessage();
+var task1 = Task.Run(async () =>
+{
+    for (int i = 0; i < 10; i++)
+    {
+        await Task.Delay(1000);
+        await request.RequestStream.WriteAsync(new MessageRequest
+        {
+            Name = "SelamünAleyküm",
+            Message = "Message" + i
+        });
+    }
+});
+while (await request.ResponseStream.MoveNext(cts.Token))
+{
+    System.Console.WriteLine(request.ResponseStream.Current.Message);
+}
+
+await task1;
+await request.RequestStream.CompleteAsync();

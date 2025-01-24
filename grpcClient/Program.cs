@@ -16,5 +16,16 @@ var channel = GrpcChannel.ForAddress("http://localhost:5247/");
 
 //message.proto
 var messageClient = new Message.MessageClient(channel);
-MessageReply messageReply =await messageClient.sendMessageAsync(new MessageRequest{ Name = "SelamünAleyküm", Message = "Nasılsınız?" });
-Console.WriteLine(messageReply.Message);
+
+////Unary
+// MessageReply messageReply =await messageClient.sendMessageAsync(new MessageRequest{ Name = "SelamünAleyküm", Message = "Nasılsınız?" });
+// Console.WriteLine(messageReply.Message);
+
+////Server Streaming
+var response = messageClient.SendMessage(new MessageRequest{ Name = "SelamünAleyküm", Message = "Nasılsınız?" });
+ CancellationTokenSource cts = new CancellationTokenSource();
+
+while (await response.ResponseStream.MoveNext(cts.Token))
+{
+    System.Console.WriteLine(response.ResponseStream.Current.Message);
+}

@@ -10,14 +10,22 @@ public class MessageService : Message.MessageBase
     {
         _logger = logger;
     }
-    
-    
-    public override Task<MessageReply> sendMessage(MessageRequest request, ServerCallContext context)
+
+    public override async Task SendMessage(
+        MessageRequest request,
+        IServerStreamWriter<MessageReply> responseStream,
+        ServerCallContext context
+    )
     {
-        System.Console.WriteLine($"Message :  {request.Message}| Name : {request.Name}");
-        return Task.FromResult(new MessageReply
+        Console.WriteLine($"Message {request.Message} | Name {request.Name}");
+
+        for (int i = 0; i < 10; i++)
         {
-            Message = "Message Received"
-        });
+            await Task.Delay(1000);
+            await responseStream.WriteAsync(new MessageReply
+            {
+                Message = $"Hello {request.Name} {i}"
+            });
+        }
     }
 }
